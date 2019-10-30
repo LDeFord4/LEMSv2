@@ -28,10 +28,7 @@ plotSun = false;
 plotSHTHum = false;
 
 %Booleans to edit data
-cutData = false;
-cutAmt = 100;
-avgData = false;
-avgIncrem = 10;
+
 
 %% Get File and Data
 fprintf("Select LEMS data (1)\n")
@@ -60,13 +57,6 @@ end
 dates = datenum(Year, Month, Date, Hour, Minute, Second);
 date_plot=(datetime(datevec(dates)));
 %using decimate on dates does not work, turns data into times in 1996
-if avgData
-    if cutData
-        dates = dates(cutAmt:end);
-    end
-    datesAvg = decimate(dates, 10);
-    date_plotAvg = (datetime(datevec(datesAvg)));
-end
 
 
 if plot2
@@ -75,50 +65,14 @@ if plot2
 end
 if plotCR3000
     date_plot3 = datetime(datevec(CR3000_Time));
-    if avgData
-        if cutData
-            CR3000_Time = CR3000_Time(cutAmt:end);
-        end
-        CR3000_TimeAvg = decimate(CR3000_Time, 10);
-        date_plot3Avg = (datetime(datevec(CR3000_TimeAvg)));
-    end
 end
 %% Saving Data to workspace
 if saveData
     save(saveCR3000Name, 'date_plot3','Record3','Batt_Lvl3','PTemp_C','TT_C', 'SBT_C');
     save(saveLEMS1Name, 'date_plot', 'Bat_Lvl','MLX_IR_C','MLX_Amb_C');
 end
-%% Working calculations, data mods
-if cutData
-    date_plot = date_plot(cutAmt:end);
-    MLX_IR_C = MLX_IR_C(cutAmt:end);
-    date_plot3 = date_plot3(cutAmt:end);
-    PTemp_C = PTemp_C(cutAmt:end);
-    TT_C = TT_C(cutAmt:end);
-    SBT_C = SBT_C(cutAmt:end);
-end
 
-cutAmt = 3800;
-    date_plot3 = date_plot3(cutAmt:end);
-    PTemp_C = PTemp_C(cutAmt:end);
-    TT_C = TT_C(cutAmt:end);
-    SBT_C = SBT_C(cutAmt:end);
 
-%% average data
-% PTemp_CAvg = PTemp_C(20:end);
-
-if avgData
-    lenAvg = round(length(MLX_IR_C)/avgIncrem);
-    MLX_IR_CAvg = zeros(lenAvg);
-    %date_plotAvg = zeros(lenAvg);
-    for i = 1:(length(lenAvg)-1)
-        MLX_IR_CAvg(i) = mean(MLX_IR_C((i*avgIncrem):(i*avgIncrem+10)));
-        %date_plotAvg(i) = date_plot(((i*avgIncrem)-(i*avgIncrem+10))/2);
-        %does not work bc date_plot is not a double but is in datetime
-    end
-    MLX_IR_CAvg(end) = mean(MLX_IR_C((lenAvg*avgIncrem):end));
-    %date_plotAvg(end) = 1;%date_plot((lenAvg*avgIncrem):end));
-end
 
 %% Plot Battery
 if plotBatt
