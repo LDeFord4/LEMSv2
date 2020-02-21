@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------
+  // ------------------------------------------------------------------------------------------------
 // Filename:
 //		LEMSv2.ino
 //
@@ -34,16 +34,22 @@
 // TODO: Depreciate Wind
 #define TEMPRH 1
 #define IR 1
-#define UPPERSOIL 1
-#define LOWERSOIL 1
-#define SUNLIGHT 1
-#define PRESSURE 1
+#define UPPERSOIL 0
+#define LOWERSOIL 0
+#define SUNLIGHT 0
+#define PRESSURE 0
 #define SONIC 1
 #define WIND 0
 #define PYRGEOMETER 0
+#define FAN 1
+
+// Time Defines, for turning on/off the fan -------------------------------------------------------
+//NB: if the LEMS is in UTC time, must enter the fanOn and fanOff in UTC time too
+const double fanOn = 7;  //hour of the morning to turn fan on
+const double fanOff = 20; //hour of night to turn fan off
 
 
-
+ 
 // Other Defines ----------------------------------------------------------------------------------
 // !! ALERT !! When DEBUG is defined as 0, the LEMSv2 will only work properly under battery or
 // external power, NOT under USB power. If you would like to power the LEMS via USB but have DEBUG
@@ -174,6 +180,11 @@ double shtAmb;               // Ambient temp values from SHT21
 double shtHum;               // Relative humidity values from SHT21
 #endif
 
+//Fan for SHT
+#if FAN
+// FAN_PIN
+#endif
+
 // DS2
 #if SONIC
 DS2 sonic(SONIC_PIN, '0');   // Initialize DS2 class
@@ -230,8 +241,13 @@ void setup() {
   analogReadResolution(ADC_RES);                // Set arduino resolution to 12 bit - only works on ARM arduino boards
 
   // Set fan low in case it's plugged in but not wanting to be used
+  // turn fan on for a few seconds to make sure it's working
   pinMode(FAN_PIN, OUTPUT);
-  digitalWrite(FAN_PIN, LOW);
+  #if FAN
+  digitalWrite(FAN_PIN, HIGH);
+   delay(2000);
+   digitalWrite(FAN_PIN, LOW);
+#endif
 
   // Turn on LED during setup process
   digitalWrite(GREEN_LED_PIN, HIGH);
@@ -245,10 +261,10 @@ void setup() {
   SYSCTRL->DFLLCTRL.bit.RUNSTDBY = 1;          // Enable DFLL48MHz clock in standby mode
 
   // Disable USB device to avoid USB interrupts. Necessitates double press of reset button to upload though
-  // This is only needed when DEBUG is 0, AND you want to power the LEMSv2 from USB power for some reason
-  //  #if !DEBUG
-  //    USBDevice.detach();
-  //  #endif
+//  // This is only needed when DEBUG is 0, AND you want to power the LEMSv2 from USB power for some reason
+//    #if !DEBUG
+//      USBDevice.detach();
+//    #endif
 
   // RTC Setup
   if (!rtc.begin()) {
@@ -320,6 +336,9 @@ void setup() {
 #if TEMPRH
   sht.begin(0x44);    // Set to 0x45 for alt. i2c address
   logfile.print(",SHT_Amb_C,SHT_Hum_Pct");
+#endif
+#if FAN
+digitalWrite(FAN_PIN, HIGH); //for testing, turning fan on (continuously)
 #endif
   logfile.println();
 
@@ -393,6 +412,25 @@ void loop() {
 #if TEMPRH
   shtAmb = sht.readTemperature();
   shtHum = sht.readHumidity();
+#endif
+#if FAN
+  if (vBat < double(12.5)) {
+    digitalWrite(FAN_PIN, LOW); // turning off fan to conserve battery when low battery power
+  }
+#endif
+//#if FAN
+//  if (SUNLIGHT) {
+//    if (sunlight < 10) {
+//      digitalWrite(FAN_PIN, LOW); // turning off fan when there is little sunlight !! FIX SWITCH VALUE HERE !!
+//    }
+//  }
+//#endif
+#if FAN
+    if (now.hour() < fanOn) {
+        if (now.hour() > fanOff) {
+          digitalWrite(FAN_PIN, LOW); // turning off fan when it's night
+        }
+    }
 #endif
 #if SONIC
   sonic.getMeasurements();
@@ -640,5 +678,3 @@ void standbySleep(void) {
   SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
   __WFI();
 }
-
-
