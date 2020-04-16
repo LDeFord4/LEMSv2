@@ -7,9 +7,18 @@ function [] = LemsAnalysis(Rad_Data,Rad_date_plot, Aspir_Data, Aspir_date_plot, 
 %associated with that data collection.  Then this function analyzes these,
 %finding statistical values like standard deviation and mean difference,
 %returning plots with these values on them and graphs of the data being
-%compared.
+%compared.  This code assumes Rad_Data is entered first! (and Aspir Second)
 
-%
+%if there are no inputs, it is assumed the following:
+if ~nargin
+    Rad_Data = SHT_Amb_C;
+    Rad_date_plot = date_plot;
+    Aspir_Data = SHT_Amb_C2;
+    Aspir_date_plot = date_plot2;
+    FW_Data = TT_C;
+    FW_date_plot = date_plot3;
+end
+
 if length(Rad_date_plot) >= length(Aspir_date_plot)
     date_plotRadAspir = Rad_date_plot(1:length(Aspir_date_plot));
     Rad_Data = Rad_Data(1:length(Aspir_Data));
@@ -21,7 +30,7 @@ else
 end
 
 stats1 = fitlm(Rad_Data, Aspir_Data);
-% 
+
 FW_DataTog = FW_Data(1:end);
 Aspir_DataTog = Aspir_Data(1:length(FW_DataTog));
 
@@ -83,6 +92,7 @@ mean(FW_Data_Short)
 
 
 %% Statistics of Rad and Aspir (two SHTs) (in total)
+
 figure
 hold on
 plot(Rad_Data, Aspir_Data, 'b*')
@@ -103,6 +113,7 @@ annotation('textbox',[.15 .55 .35 .35], 'String', {R2Text;AvgText;SdCText;SdC2Te
 hold off
 
 %% Statistics of V2 and Finewire (in total)
+
 figure
 hold on
 plot(FW_DataTog, Aspir_DataTog, 'b*')
@@ -123,6 +134,7 @@ annotation('textbox',[.4 .1 .5 .3], 'String', {R2Text;AvgText;SdTTCText;SdC2Text
 hold off
 
 %% Statistics of Rad and Aspir (two SHTs) (in short)
+
 figure
 hold on
 plot(Rad_Data_Short_Min, Aspir_Data_Short_Min, 'b*')
