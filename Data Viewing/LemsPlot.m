@@ -3,19 +3,12 @@
 % Plot data from a LEMSv2 File
 %modified by Lexi DeFord
 
-clear all, close all, clc
+clear, close all, clc
 
 %% Command Center
 
-%save data to worksheets for quicker access later?
-saveData = false; 
-saveCR3000Name = 'CR3000.10.22.19';
-saveLEMS1Name = 'LEMS1.10.22.19';
-saveLEMS2Name = 'LEMS2.10.22.19';
-
-
 %Booleans to plot LEMS data
-plot2 = true    ; % two LEMS plots? 
+plot2 = true; % two LEMS plots? 
 plotCR3000 = true; %trying to plot CR3000 data too?
 
 plotBatt =false;
@@ -58,8 +51,6 @@ end
 %% Get Dates
 dates = datenum(Year, Month, Date, Hour, Minute, Second);
 date_plot=(datetime(datevec(dates)));
-%using decimate on dates does not work, turns data into times in 1996
-
 
 if plot2
     dates2 = datenum(Year2, Month2, Date2, Hour2, Minute2, Second2);
@@ -68,13 +59,6 @@ end
 if plotCR3000
     date_plot3 = datetime(datevec(CR3000_Time));
 end
-% %% Saving Data to workspace
-% if saveData
-%     save(saveCR3000Name, 'date_plot3','Record3','Batt_Lvl3','PTemp_C','TT_C', 'SBT_C');
-%     save(saveLEMS1Name, 'date_plot', 'Bat_Lvl','MLX_IR_C','MLX_Amb_C');
-% end
-
-
 
 %% Plot Battery
 if plotBatt
@@ -132,7 +116,7 @@ if plotTemp
         %'PTemp', 'TT', 'SBT');
     %legend('MLX Surface1', 'MLX Surface2',...
         %'PTemp', 'TT', 'SBT');
-%     LemsAnalysis(SHT_Amb_C,date_plot, SHT_Amb_C2,date_plot2, TT_C, date_plot3)
+     LemsAnalysis
 end
 
 %% Plot Soil Moisture
