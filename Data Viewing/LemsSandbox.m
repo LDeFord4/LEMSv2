@@ -1,6 +1,9 @@
 %LemsSandbox
 %Lexi DeFord
 %August 2020
+%This is a modified version of LemsAnalysis. This returns plots of comparison plots, and in some of the graphs the data is split into day and night regions.
+%There is also a 1 minute average plot. All plots have R^2 value and mean difference reported.
+
 
 % 
 % if length(Rad_date_plot) >= length(Aspir_date_plot)
