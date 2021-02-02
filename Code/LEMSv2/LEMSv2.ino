@@ -417,26 +417,26 @@ void loop() {
   shtHum = sht.readHumidity();
 #endif
 #if FAN
-  if ((now.hour() < fanOn) || (now.hour() > fanOff))  {
+  fanSwitch = true; //every cycle we reset the fanSwitch to true, and only if one of the battery, time, or sunlight
+  //switches are tripped does the fanSwtich become false
+  
+  if (vBat < 12.0) {
     fanSwitch = false;
   }
-  if ((now.hour() > fanOn) || (now.hour() < fanOff))  {
-    fanSwitch = true;
-  }
-  #if SUNLIGHT
-    if (sunlight < 50) {
-      fanSwitch = false;
-    }
-    if (sunlight > 51) {
-      fanSwitch = true;
-    }
-  #endif
-  if (vBat < 11.5) {
+  else {
+    if ((now.hour() < fanOn) || (now.hour() > fanOff))  {
     fanSwitch = false;
-  }
-  if (vBat > 11.51) {
-    fanSwitch = true;
-  }
+    }
+    else
+      #if SUNLIGHT
+        if (sunlight < 50) {
+          fanSwitch = false;
+        }
+      #endif
+      else {
+        fanSwitch = true;
+      }
+
   if (fanSwitch == true) {
     digitalWrite(FAN_PIN, HIGH);
   }
