@@ -419,23 +419,16 @@ void loop() {
 #if FAN
   fanSwitch = true; //every cycle we reset the fanSwitch to true, and only if one of the battery, time, or sunlight
   //switches are tripped does the fanSwtich become false
-  
-  if (vBat < 12.0) {
+
+  #if SUNLIGHT
+  if (vBat < 12.0 ||(now.hour() < fanOn) || (now.hour() > fanOff) || sunlight < 50) {
     fanSwitch = false;
   }
-  else {
-    if ((now.hour() < fanOn) || (now.hour() > fanOff))  {
+  #endif
+  
+  if (vBat < 12.0 ||(now.hour() < fanOn) || (now.hour() > fanOff)) {
     fanSwitch = false;
-    }
-    else
-      #if SUNLIGHT
-        if (sunlight < 50) {
-          fanSwitch = false;
-        }
-      #endif
-      else {
-        fanSwitch = true;
-      }
+  }
 
   if (fanSwitch == true) {
     digitalWrite(FAN_PIN, HIGH);
