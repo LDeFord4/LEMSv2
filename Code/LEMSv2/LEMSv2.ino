@@ -33,15 +33,20 @@
 // Sensor Defines: Plugged in sensors should be defined as 1 --------------------------------------
 // TODO: Depreciate Wind
 #define TEMPRH 1
-#define IR 1
-#define UPPERSOIL 1
-#define LOWERSOIL 1
+#define IR 0
+#define UPPERSOIL 0
+#define LOWERSOIL 0
 #define SUNLIGHT 1
-#define PRESSURE 1
+#define PRESSURE 0
 #define SONIC 1
-#define WIND 0
+#define WIND 1
 #define PYRGEOMETER 0
+#define FAN 1
 
+// Time Defines, for turning on/off the fan -------------------------------------------------------
+//NB: if the LEMS is in UTC time, must enter the fanOn and fanOff in UTC time too
+const double fanOn = 3;  //hour of the morning to turn fan on
+const double fanOff = 20; //hour of night to turn fan off
 
 
 // Other Defines ----------------------------------------------------------------------------------
@@ -61,7 +66,7 @@
 #define CARDSELECT 5        // SD  card chip select pin
 #define RTC_ALARM_PIN 9     // DS3231 Alarm pin
 #define BAT_PIN A5          // Battery resistor div. pin
-#define FAN_PIN 11          // Pin for cooling fan
+#define FAN_PIN 4          // Pin for cooling fan (was 11 on original code)
 
 #define WDIR_PIN A4         // Davis wind direction pin
 #define WSPD_PIN 8          // Davis wind speed pin
@@ -162,8 +167,8 @@ double wSpd;                         // Wind speed
 
 #if SUNLIGHT
 double rawSun = 0;                       // Float to hold voltage read from ADS1115
-const double liConst = 57.80E-6 / 1000;  // Licor Calibration Constant. Units of (Amps/(W/m^2))
-const double ampResistor = 59000;        // Exact Resistor Value used by Op-Amp in Ohms
+const double liConst = 1.0225E-4 /1000;  // Licor Calibration Constant. Units of (Amps/(W/m^2))
+const double ampResistor = 32900;        // Exact Resistor Value used by Op-Amp in Ohms
 double sunlight = 0.0;                   // Converted Value
 #endif
 
@@ -172,6 +177,11 @@ double sunlight = 0.0;                   // Converted Value
 Adafruit_SHT31 sht = Adafruit_SHT31();
 double shtAmb;               // Ambient temp values from SHT21
 double shtHum;               // Relative humidity values from SHT21
+#endif
+
+//Fan for SHT
+#if FAN
+bool fanSwitch = true;        // if true, fan is on, if false, fan is off
 #endif
 
 // DS2
@@ -229,9 +239,17 @@ void setup() {
   pinMode(CARDSELECT, OUTPUT);
   analogReadResolution(ADC_RES);                // Set arduino resolution to 12 bit - only works on ARM arduino boards
 
+
   // Set fan low in case it's plugged in but not wanting to be used
+  // turn fan on for a few seconds to make sure it's working
   pinMode(FAN_PIN, OUTPUT);
+  
+#if FAN
+  digitalWrite(FAN_PIN, HIGH);
+  delay(2000);
   digitalWrite(FAN_PIN, LOW);
+#endif
+
 
   // Turn on LED during setup process
   digitalWrite(GREEN_LED_PIN, HIGH);
@@ -321,6 +339,10 @@ void setup() {
   sht.begin(0x44);    // Set to 0x45 for alt. i2c address
   logfile.print(",SHT_Amb_C,SHT_Hum_Pct");
 #endif
+#if FAN
+digitalWrite(FAN_PIN, HIGH); //for testing, turning fan on (continuously)
+  logfile.print(",Fan_Switch");
+#endif
   logfile.println();
 
   // Delay and indicate start
@@ -393,6 +415,34 @@ void loop() {
 #if TEMPRH
   shtAmb = sht.readTemperature();
   shtHum = sht.readHumidity();
+#endif
+#if FAN
+  if ((now.hour() < fanOn) || (now.hour() > fanOff))  {
+    fanSwitch = false;
+  }
+  if ((now.hour() > fanOn) || (now.hour() < fanOff))  {
+    fanSwitch = true;
+  }
+  #if SUNLIGHT
+    if (sunlight < 50) {
+      fanSwitch = false;
+    }
+    if (sunlight > 51) {
+      fanSwitch = true;
+    }
+  #endif
+  if (vBat < 11.5) {
+    fanSwitch = false;
+  }
+  if (vBat > 11.51) {
+    fanSwitch = true;
+  }
+  if (fanSwitch == true) {
+    digitalWrite(FAN_PIN, HIGH);
+  }
+  else {
+    digitalWrite(FAN_PIN, LOW);
+  }
 #endif
 #if SONIC
   sonic.getMeasurements();
@@ -507,6 +557,10 @@ void loop() {
   logfile.print(",");
   logfile.print(shtHum);
 #endif
+#if FAN
+  logfile.print(",");
+  logfile.print(fanSwitch);
+#endif
   logfile.println();
   logfile.flush();
 
@@ -582,6 +636,10 @@ void loop() {
   SerialUSB.print(", ");
   SerialUSB.print(shtHum);
 #endif
+#if FAN
+  SerialUSB.print(", ");
+  SerialUSB.print(fanSwitch);
+#endif
   SerialUSB.println();
 #endif
 
@@ -640,5 +698,3 @@ void standbySleep(void) {
   SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
   __WFI();
 }
-
-
